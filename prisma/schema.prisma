@@ -1,0 +1,98 @@
+// This is your Prisma schema file,
+// Learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  seed     = "prisma/seed.ts"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String      @id @unique @default(cuid())
+  email     String      @unique
+  password  String
+  firstName String?
+  lastName  String?
+  avatarURL String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt @default(now())
+  role      AccountRole @default(EMPLOYEE)
+  chats     Chat[]
+  messages  Message[]
+  projects  Project[]
+  tasks     Task[]
+  readReceipts ReadReceipt[]
+}
+
+model Message {
+  id        String    @id @unique @default(cuid())
+  content   String
+  imageUrls String[]
+  audioUrls String[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt @default(now())
+  sender    User      @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderId    String
+  chat      Chat?     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  chatId    String?
+  readReceipts ReadReceipt[] 
+}
+
+model ReadReceipt {
+  id        String   @id @unique @default(cuid())
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  readAt    DateTime @default(now())
+}
+
+model Chat {
+  id        String    @id @unique @default(cuid())
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt @default(now())
+  messages  Message[]
+  users     User[]
+  name      String
+  description String
+}
+
+model Project {
+  id       String   @id @unique @default(cuid())
+  name     String
+  tasks    Task[]
+  deadline DateTime @default(now())
+  budget   Float
+  lead     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt @default(now())
+}
+
+model Task {
+  id          String   @id @unique @default(cuid())
+  name        String
+  description String?
+  days        Int
+  cost        Float
+  deadline    DateTime @default(now())
+  completed   Boolean  @default(false)
+  member      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Project     Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  projectId   String?
+  userId      String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt @default(now())
+}
+
+enum AccountRole {
+  EMPLOYEE
+  TEAMLEADER
+  MANAGER
+}
+
+
